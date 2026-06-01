@@ -1,0 +1,7 @@
+git clone <https://github.com/saugataryal2003-dot/Money.git>
+cd Money
+git checkout claude/money-project-setup-aErMi
+echo 'VITE_SUPABASE_URL=<https://ctcctfflssvcgaseqsjd.supabase.co>
+VITE_SUPABASE_ANON_KEY=sb_publishable_48QyEQ4J99S8cSKaonovtg_a3Dpqpa8' > .env
+npm install
+npm run dev

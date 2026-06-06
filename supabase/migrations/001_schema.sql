@@ -1,9 +1,8 @@
 -- MoneyApp — Trading Bot Schema
--- Run this in your Supabase project: Dashboard → SQL Editor → New query → paste → Run
+-- Idempotent: safe to run multiple times
 
 create extension if not exists "uuid-ossp";
 
--- Portfolio snapshots (hourly balance/equity readings from Bybit)
 create table if not exists portfolio_snapshots (
   id uuid primary key default uuid_generate_v4(),
   balance numeric not null,
@@ -12,7 +11,6 @@ create table if not exists portfolio_snapshots (
   timestamp timestamptz default now()
 );
 
--- Single-row bot configuration
 create table if not exists bot_config (
   id uuid primary key default uuid_generate_v4(),
   leverage int default 5,
@@ -27,7 +25,6 @@ create table if not exists bot_config (
   updated_at timestamptz default now()
 );
 
--- AI/Claude signals
 create table if not exists signals (
   id uuid primary key default uuid_generate_v4(),
   pair text not null default 'BTCUSDT',
@@ -40,7 +37,6 @@ create table if not exists signals (
   created_at timestamptz default now()
 );
 
--- Executed trades
 create table if not exists trades (
   id uuid primary key default uuid_generate_v4(),
   bybit_order_id text,
@@ -60,7 +56,6 @@ create table if not exists trades (
   closed_at timestamptz
 );
 
--- Open positions (synced live from Bybit)
 create table if not exists positions (
   id uuid primary key default uuid_generate_v4(),
   bybit_position_id text,
@@ -79,7 +74,6 @@ create table if not exists positions (
   updated_at timestamptz default now()
 );
 
--- Bot logs
 create table if not exists bot_logs (
   id uuid primary key default uuid_generate_v4(),
   level text default 'info' check (level in ('info', 'warn', 'error', 'debug')),
@@ -88,7 +82,7 @@ create table if not exists bot_logs (
   created_at timestamptz default now()
 );
 
--- Enable Row Level Security
+-- Enable RLS
 alter table portfolio_snapshots enable row level security;
 alter table bot_config enable row level security;
 alter table signals enable row level security;
@@ -96,7 +90,14 @@ alter table trades enable row level security;
 alter table positions enable row level security;
 alter table bot_logs enable row level security;
 
--- Permissive policies (personal project — tighten with auth later)
+-- Drop policies before recreating (idempotent)
+drop policy if exists "allow_all" on portfolio_snapshots;
+drop policy if exists "allow_all" on bot_config;
+drop policy if exists "allow_all" on signals;
+drop policy if exists "allow_all" on trades;
+drop policy if exists "allow_all" on positions;
+drop policy if exists "allow_all" on bot_logs;
+
 create policy "allow_all" on portfolio_snapshots using (true) with check (true);
 create policy "allow_all" on bot_config using (true) with check (true);
 create policy "allow_all" on signals using (true) with check (true);
@@ -111,6 +112,7 @@ alter publication supabase_realtime add table signals;
 alter publication supabase_realtime add table trades;
 alter publication supabase_realtime add table bot_config;
 
--- Seed default bot config
+-- Seed default bot config (once only)
 insert into bot_config (leverage, position_size_pct, max_positions, daily_loss_limit, stop_loss_pct, take_profit_pct, active, strategy, pair)
-values (5, 2, 1, 10, 2, 4, false, 'ai_signals', 'BTCUSDT');
+select 5, 2, 1, 10, 2, 4, false, 'ai_signals', 'BTCUSDT'
+where not exists (select 1 from bot_config);

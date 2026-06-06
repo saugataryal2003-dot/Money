@@ -105,12 +105,32 @@ create policy "allow_all" on trades using (true) with check (true);
 create policy "allow_all" on positions using (true) with check (true);
 create policy "allow_all" on bot_logs using (true) with check (true);
 
--- Enable Realtime
-alter publication supabase_realtime add table portfolio_snapshots;
-alter publication supabase_realtime add table positions;
-alter publication supabase_realtime add table signals;
-alter publication supabase_realtime add table trades;
-alter publication supabase_realtime add table bot_config;
+-- Enable Realtime (idempotent — skip tables already in the publication)
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'portfolio_snapshots') then
+    alter publication supabase_realtime add table portfolio_snapshots;
+  end if;
+end $$;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'positions') then
+    alter publication supabase_realtime add table positions;
+  end if;
+end $$;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'signals') then
+    alter publication supabase_realtime add table signals;
+  end if;
+end $$;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'trades') then
+    alter publication supabase_realtime add table trades;
+  end if;
+end $$;
+do $$ begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'bot_config') then
+    alter publication supabase_realtime add table bot_config;
+  end if;
+end $$;
 
 -- Seed default bot config (once only)
 insert into bot_config (leverage, position_size_pct, max_positions, daily_loss_limit, stop_loss_pct, take_profit_pct, active, strategy, pair)

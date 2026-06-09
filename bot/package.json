@@ -10,12 +10,12 @@
     "@anthropic-ai/sdk": "^0.37.0",
     "@supabase/supabase-js": "^2.49.4",
     "bybit-api": "^3.10.9",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "tsx": "^4.19.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/ws": "^8.18.1",
-    "tsx": "^4.19.0",
     "typescript": "~5.8.0"
   }
 }

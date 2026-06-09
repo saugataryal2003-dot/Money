@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { createServer } from 'http';
 import { getKlines, getState, openPosition, closePosition } from './lib/bybit.js';
 import { generateSignal } from './lib/claude.js';
 import { saveSnapshot, saveSignal, saveTrade, closeTrade, log } from './lib/db.js';
@@ -97,6 +98,9 @@ async function tick(): Promise<void> {
     await log('error', `Tick failed: ${msg}`).catch(console.error);
   }
 }
+
+// Health endpoint required by Railway to keep the container alive
+createServer((_, res) => res.end('OK')).listen(Number(process.env.PORT ?? 3000));
 
 await log('info', `Bot starting — ${SYMBOL} every ${INTERVAL_MS / 1000}s (testnet=${process.env.BYBIT_TESTNET})`);
 await tick();

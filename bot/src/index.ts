@@ -89,7 +89,11 @@ async function tick(): Promise<void> {
       });
     }
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    const msg = err instanceof Error
+      ? err.message
+      : typeof err === 'object'
+        ? JSON.stringify(err)
+        : String(err);
     await log('error', `Tick failed: ${msg}`).catch(console.error);
   }
 }
